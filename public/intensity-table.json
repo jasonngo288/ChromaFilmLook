@@ -1,0 +1,134 @@
+{
+  "version": "P0",
+  "date": "2026-11-10",
+  "description": "Bảng intensity LUT x scene - tĩnh, P0 (khởi điểm, validate bằng scorecard)",
+  "source": "spec §3.2 + huong-mau-tune-9-preset-2026-11-10.md + presets-drop-2026/*.json",
+  "scenes": [
+    "portrait",
+    "landscape-sky",
+    "food",
+    "night",
+    "street",
+    "indoor",
+    "pet"
+  ],
+  "presets": {
+    "cpm35": {
+      "name": "cpm35 (Free)",
+      "intensities": {
+        "portrait": 50,
+        "landscape-sky": 60,
+        "food": 50,
+        "night": 40,
+        "street": 70,
+        "indoor": 60,
+        "pet": 50
+      },
+      "note": "Street là nhà; night thấp vì shadow lift + grain dễ wash"
+    },
+    "portra-160": {
+      "name": "portra-160",
+      "intensities": {
+        "portrait": 60,
+        "landscape-sky": 50,
+        "food": 60,
+        "night": 40,
+        "street": 50,
+        "indoor": 60,
+        "pet": 50
+      },
+      "note": "Portrait/indoor là nhà (soft, da an toàn)"
+    },
+    "fuji-400h": {
+      "name": "fuji-400h",
+      "intensities": {
+        "portrait": 55,
+        "landscape-sky": 50,
+        "food": 55,
+        "night": 40,
+        "street": 55,
+        "indoor": 55,
+        "pet": 50
+      },
+      "note": "Muted đều các scene, không scene nào cao"
+    },
+    "kodachrome-64": {
+      "name": "kodachrome-64",
+      "intensities": {
+        "portrait": 40,
+        "landscape-sky": 80,
+        "food": 50,
+        "night": 40,
+        "street": 70,
+        "indoor": 50,
+        "pet": 50
+      },
+      "note": "Portrait thấp (contrast cao, rủi ro da); landscape là nhà"
+    },
+    "grd-r": {
+      "name": "grd-r",
+      "intensities": {
+        "portrait": 50,
+        "landscape-sky": 55,
+        "food": 55,
+        "night": 40,
+        "street": 65,
+        "indoor": 60,
+        "pet": 50
+      },
+      "note": "Street warm là nhà"
+    },
+    "palm-springs": {
+      "name": "palm-springs",
+      "intensities": {
+        "portrait": 50,
+        "landscape-sky": 70,
+        "food": 60,
+        "night": 40,
+        "street": 60,
+        "indoor": 55,
+        "pet": 55
+      },
+      "note": "Landscape sáng/ấm là nhà"
+    },
+    "social-pop": {
+      "name": "social-pop (Story)",
+      "intensities": {
+        "portrait": 60,
+        "landscape-sky": 80,
+        "food": 70,
+        "night": 50,
+        "street": 80,
+        "indoor": 70,
+        "pet": 70
+      },
+      "note": "Preset riêng Story 9:16 — cao toàn bảng, night vẫn cap 50"
+    },
+    "superia-400": {
+      "name": "superia-400 (Free)",
+      "intensities": {
+        "portrait": 55,
+        "landscape-sky": 70,
+        "food": 60,
+        "night": 45,
+        "street": 65,
+        "indoor": 60,
+        "pet": 55
+      },
+      "note": "Đã có toneCurve; bảng này chỉ để runtime tra"
+    },
+    "cinestill-800t": {
+      "name": "cinestill-800t",
+      "intensities": {
+        "portrait": 40,
+        "landscape-sky": 50,
+        "food": 50,
+        "night": 75,
+        "street": 60,
+        "indoor": 55,
+        "pet": 40
+      },
+      "note": "Night là nhà (halation); portrait/pet thấp (teal shadow)"
+    }
+  }
+}

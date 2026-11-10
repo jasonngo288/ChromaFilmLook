@@ -1,0 +1,6 @@
+{
+  "name": "ChromaFilm - Color Science & Film Emulation Studio",
+  "description": "Interactive color science suite for film emulation, 3D LUT generation (.cube), HaldCLUT matrices, sensitometric tone curves, real-time scopes, and code export for Python, GLSL, Metal, and CoreImage.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
