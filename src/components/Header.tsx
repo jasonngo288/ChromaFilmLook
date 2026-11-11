@@ -2,8 +2,8 @@ import React from 'react';
 import { Film, Sliders, Activity, Code2, Sparkles, RotateCcw, Download } from 'lucide-react';
 
 interface HeaderProps {
-  activeTab: 'studio' | 'scopes' | 'code' | 'ai-consult';
-  onSelectTab: (tab: 'studio' | 'scopes' | 'code' | 'ai-consult') => void;
+  activeTab: 'studio' | 'analyzer' | 'scopes' | 'code' | 'ai-consult';
+  onSelectTab: (tab: 'studio' | 'analyzer' | 'scopes' | 'code' | 'ai-consult') => void;
   onOpenExport: () => void;
   onOpenAIAnalyzer: () => void;
   onResetToNeutral: () => void;
@@ -35,7 +35,7 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* Zone 2: 4 single-line text navigation links/tabs */}
+      {/* Zone 2: 5 single-line text navigation links/tabs */}
       <nav className="flex items-center gap-6 text-xs font-medium text-slate-400">
         <button
           onClick={() => onSelectTab('studio')}
@@ -48,13 +48,23 @@ export const Header: React.FC<HeaderProps> = ({
         </button>
 
         <button
+          onClick={() => onSelectTab('analyzer')}
+          className={`flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0 ${
+            activeTab === 'analyzer' ? 'text-amber-400 font-semibold' : 'hover:text-slate-200'
+          }`}
+        >
+          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+          <span>Phân Tích & LUT</span>
+        </button>
+
+        <button
           onClick={() => onSelectTab('scopes')}
           className={`flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0 ${
             activeTab === 'scopes' ? 'text-amber-400 font-semibold' : 'hover:text-slate-200'
           }`}
         >
           <Activity className="w-3.5 h-3.5" />
-          <span>Sensitometry & Scopes</span>
+          <span>Sensitometry Scopes</span>
         </button>
 
         <button
@@ -73,8 +83,7 @@ export const Header: React.FC<HeaderProps> = ({
             activeTab === 'ai-consult' ? 'text-amber-400 font-semibold' : 'hover:text-slate-200'
           }`}
         >
-          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-          <span>AI Color Scientist</span>
+          <span>AI Specialist</span>
         </button>
       </nav>
 

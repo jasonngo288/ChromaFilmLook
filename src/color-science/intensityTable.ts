@@ -79,6 +79,58 @@ export const INTENSITY_TABLE: Record<string, PresetIntensityRow> = {
     },
     note: 'Street là nhà; night thấp vì shadow lift + grain dễ wash',
   },
+  'carmencita-gold': {
+    name: 'Carmencita Gold/Portra',
+    intensities: {
+      'portrait': 55,
+      'landscape-sky': 65,
+      'food': 60,
+      'night': 40,
+      'street': 65,
+      'indoor': 60,
+      'pet': 50,
+    },
+    note: 'Benidorm Mediterranean sun (Gold 200 + Portra 400)',
+  },
+  'retocolor-bling-400': {
+    name: 'RETOCOLOR Bling-Bling 400',
+    intensities: {
+      'portrait': 55,
+      'landscape-sky': 50,
+      'food': 60,
+      'night': 70,
+      'street': 65,
+      'indoor': 65,
+      'pet': 50,
+    },
+    note: 'Night flash & party (Y2K sparkle, punchy contrast)',
+  },
+  'retocolor-catcha-400': {
+    name: "RETOCOLOR Cat'cha 400",
+    intensities: {
+      'portrait': 55,
+      'landscape-sky': 60,
+      'food': 55,
+      'night': 40,
+      'street': 65,
+      'indoor': 55,
+      'pet': 65,
+    },
+    note: 'Pet & daylight street (dịu pastel Nhật Bản, cyan sky)',
+  },
+  'retocolor-emoticon-400': {
+    name: 'RETOCOLOR Emoticon 400',
+    intensities: {
+      'portrait': 60,
+      'landscape-sky': 50,
+      'food': 60,
+      'night': 65,
+      'street': 60,
+      'indoor': 65,
+      'pet': 50,
+    },
+    note: 'Selfie & bạn bè (Harajuku pop, warm cream flash)',
+  },
   'portra-160': {
     name: 'portra-160',
     intensities: {

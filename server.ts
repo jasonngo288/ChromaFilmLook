@@ -179,11 +179,29 @@ Whenever code is requested, provide full, runnable, un-truncated scripts with co
     }
   });
 
+  // Catch-all for any unhandled /api/* routes so they NEVER return HTML
+  app.all('/api/*', (req, res) => {
+    res.status(404).json({
+      error: `API endpoint not found: ${req.method} ${req.originalUrl}`,
+    });
+  });
+
+  // Express error handler to ensure all errors return JSON instead of HTML
+  app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    console.error('Server error encountered:', err);
+    if (res.headersSent) {
+      return next(err);
+    }
+    res.status(err.status || 500).json({
+      error: err.message || 'Internal server error occurred.',
+    });
+  });
+
   // Setup Vite dev server or static files
   if (!isProd) {
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: { middlewareMode: true, hmr: false },
       appType: 'spa',
     });
     app.use(vite.middlewares);

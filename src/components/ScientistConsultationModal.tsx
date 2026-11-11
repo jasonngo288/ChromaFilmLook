@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { FilmEmulationProfile } from '../color-science/types.ts';
 import { X, Sparkles, Send, Terminal, Copy, Check, BookOpen } from 'lucide-react';
+import { safeFetchJson } from '../utils/safeApi.ts';
 
 interface ScientistConsultationModalProps {
   isOpen: boolean;
@@ -56,7 +57,7 @@ Ask any color science question or select a technical query below.`,
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/consult-scientist', {
+      const data = await safeFetchJson<{ response: string }>('/api/consult-scientist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -71,11 +72,6 @@ Ask any color science question or select a technical query below.`,
           },
         }),
       });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to consult Color Scientist.');
-      }
 
       setMessages((prev) => [
         ...prev,

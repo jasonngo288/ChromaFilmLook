@@ -11,12 +11,13 @@ import { CodeExportModal } from './components/CodeExportModal.tsx';
 import { AILookAnalyzerModal } from './components/AILookAnalyzerModal.tsx';
 import { ScientistConsultationModal } from './components/ScientistConsultationModal.tsx';
 import { IntensityScorecardModal } from './components/IntensityScorecardModal.tsx';
+import { LookAnalyzerTab } from './components/LookAnalyzerTab.tsx';
 
 export default function App() {
   const [profile, setProfile] = useState<FilmEmulationProfile>(FILM_PRESETS[0]);
   const [scene, setScene] = useState<SceneType>('portrait');
   const [intensity, setIntensity] = useState<number>(0.50);
-  const [activeTab, setActiveTab] = useState<'studio' | 'scopes' | 'code' | 'ai-consult'>('studio');
+  const [activeTab, setActiveTab] = useState<'studio' | 'analyzer' | 'scopes' | 'code' | 'ai-consult'>('analyzer');
   const [isExportOpen, setIsExportOpen] = useState<boolean>(false);
   const [isAIAnalyzerOpen, setIsAIAnalyzerOpen] = useState<boolean>(false);
   const [isConsultOpen, setIsConsultOpen] = useState<boolean>(false);
@@ -125,17 +126,27 @@ export default function App() {
         activePresetName={profile.name}
       />
 
-      {/* Film Stock Preset Shelf */}
-      <div className="px-6 py-2 bg-slate-950 border-b border-slate-900 shrink-0">
-        <PresetSelector
-          activeProfileId={profile.id}
-          onSelectPreset={handleSelectPreset}
-        />
-      </div>
+      {/* Film Stock Preset Shelf (shown for studio & scopes) */}
+      {(activeTab === 'studio' || activeTab === 'scopes') && (
+        <div className="px-6 py-2 bg-slate-950 border-b border-slate-900 shrink-0">
+          <PresetSelector
+            activeProfileId={profile.id}
+            onSelectPreset={handleSelectPreset}
+          />
+        </div>
+      )}
 
       {/* Main Studio Viewport */}
-      <main className="flex-1 flex overflow-hidden p-6 gap-6">
-        {activeTab === 'studio' && (
+      {activeTab === 'analyzer' ? (
+        <main className="flex-1 flex overflow-hidden">
+          <LookAnalyzerTab
+            onApplyProfileToStudio={handleApplyExtractedLook}
+            onNavigateToStudio={() => setActiveTab('studio')}
+          />
+        </main>
+      ) : (
+        <main className="flex-1 flex overflow-hidden p-6 gap-6">
+          {activeTab === 'studio' && (
           <>
             {/* Left 62%: Interactive Film Canvas with Scene & Intensity ribbon */}
             <div className="flex-1 flex flex-col min-w-0">
@@ -153,6 +164,7 @@ export default function App() {
                 onOpenIntensityTable={() => setIsScorecardOpen(true)}
                 onProbePixel={setProbeData}
                 onImageLoaded={setSourceCanvas}
+                presetId={profile.id}
               />
             </div>
 
@@ -191,6 +203,7 @@ export default function App() {
                 onOpenIntensityTable={() => setIsScorecardOpen(true)}
                 onProbePixel={setProbeData}
                 onImageLoaded={setSourceCanvas}
+                presetId={profile.id}
               />
             </div>
 
@@ -207,6 +220,7 @@ export default function App() {
           </>
         )}
       </main>
+    )}
 
       {/* Modal 1: Code & 3D LUT (.cube / HaldCLUT) Export */}
       <CodeExportModal

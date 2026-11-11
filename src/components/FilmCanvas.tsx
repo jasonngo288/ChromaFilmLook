@@ -3,7 +3,8 @@ import { SensitometryParams, Matrix3x3, ColorGradingParams, OpticalArtifactsPara
 import { transformPixel, LUMA_R, LUMA_G, LUMA_B, clamp } from '../color-science/transferFunctions.ts';
 import { SceneType, SCENE_DEFINITIONS } from '../color-science/intensityTable.ts';
 import { MACBETH_COLOR_CHECKER_PATCHES } from '../color-science/colorCheckerData.ts';
-import { Upload, Eye, Columns, SplitSquareVertical, Sparkles, Crosshair, Table, SlidersHorizontal, RotateCcw } from 'lucide-react';
+import { Upload, Eye, Columns, SplitSquareVertical, Sparkles, Crosshair, Table, SlidersHorizontal, RotateCcw, Dices, Download, Layers, Maximize2, Minimize2 } from 'lucide-react';
+import { GraphicOverlayType, OverlayBlendMode, applyGraphicOverlay } from '../color-science/graphicOverlay.ts';
 
 const TEST_IMAGES = [
   {
@@ -23,6 +24,12 @@ const TEST_IMAGES = [
     label: 'Mountain Vista (Sky & Cloud Roll-Off)',
     src: '/src/assets/images/landscape_dynamic_range_1794287471178.jpg',
     defaultScene: 'landscape-sky' as SceneType,
+  },
+  {
+    id: 'benidorm',
+    label: 'Benidorm (Carmencita IG Post)',
+    src: '/benidorm_ref.jpg',
+    defaultScene: 'street' as SceneType,
   },
   {
     id: 'macbeth',
@@ -46,6 +53,7 @@ interface FilmCanvasProps {
   onOpenIntensityTable: () => void;
   onProbePixel?: (probe: PixelProbeData | null) => void;
   onImageLoaded?: (canvas: HTMLCanvasElement) => void;
+  presetId?: string;
 }
 
 export const FilmCanvas: React.FC<FilmCanvasProps> = ({
@@ -62,6 +70,7 @@ export const FilmCanvas: React.FC<FilmCanvasProps> = ({
   onOpenIntensityTable,
   onProbePixel,
   onImageLoaded,
+  presetId,
 }) => {
   const [selectedImageId, setSelectedImageId] = useState<string>('portrait');
   const [customImageSrc, setCustomImageSrc] = useState<string | null>(null);
@@ -70,6 +79,15 @@ export const FilmCanvas: React.FC<FilmCanvasProps> = ({
   const [isDraggingSplit, setIsDraggingSplit] = useState<boolean>(false);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [probeData, setProbeData] = useState<PixelProbeData | null>(null);
+
+  // Graphic Overlay Layer State (Pre-exposed film pattern)
+  const [overlayType, setOverlayType] = useState<GraphicOverlayType>('none');
+  const [overlayBlendMode, setOverlayBlendMode] = useState<OverlayBlendMode>('screen');
+  const [overlayOpacity, setOverlayOpacity] = useState<number>(0.85);
+  const [overlaySeed, setOverlaySeed] = useState<number>(42);
+  const [overlayTint, setOverlayTint] = useState<'authentic' | 'white'>('authentic');
+  const [showOverlayControls, setShowOverlayControls] = useState<boolean>(true);
+  const [canvasScaleMode, setCanvasScaleMode] = useState<'fit' | 'full'>('fit');
 
   const containerRef = useRef<HTMLDivElement>(null);
   const displayCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -236,10 +254,51 @@ export const FilmCanvas: React.FC<FilmCanvasProps> = ({
     }
 
     gradedCtx.putImageData(outImageData, 0, 0);
+
+    // Third Pass: Pre-exposed Graphic Overlay Layer (Screen / Additive Blend)
+    if (overlayType !== 'none' && overlayOpacity > 0.01) {
+      applyGraphicOverlay(gradedCanvas, {
+        type: overlayType,
+        blendMode: overlayBlendMode,
+        opacity: overlayOpacity * Math.min(1.0, intensity * 1.15),
+        seed: overlaySeed,
+        colorTint: overlayTint,
+      });
+    }
+
     gradedImageCanvasRef.current = gradedCanvas;
     setIsProcessing(false);
     renderDisplay();
-  }, [sensitometry, colorMatrix, colorGrading, opticalArtifacts, targetColorSpace, intensity]);
+  }, [
+    sensitometry,
+    colorMatrix,
+    colorGrading,
+    opticalArtifacts,
+    targetColorSpace,
+    intensity,
+    overlayType,
+    overlayBlendMode,
+    overlayOpacity,
+    overlaySeed,
+    overlayTint,
+  ]);
+
+  // Synchronize overlay pattern when selecting RETOCOLOR film stocks
+  useEffect(() => {
+    if (presetId === 'retocolor-bling-400') {
+      setOverlayType('bling-bling');
+      setOverlayBlendMode('screen');
+      setOverlayOpacity(0.85);
+    } else if (presetId === 'retocolor-catcha-400') {
+      setOverlayType('catcha');
+      setOverlayBlendMode('screen');
+      setOverlayOpacity(0.85);
+    } else if (presetId === 'retocolor-emoticon-400') {
+      setOverlayType('emoticon');
+      setOverlayBlendMode('screen');
+      setOverlayOpacity(0.85);
+    }
+  }, [presetId]);
 
   useEffect(() => {
     processGrading();
@@ -450,6 +509,15 @@ export const FilmCanvas: React.FC<FilmCanvasProps> = ({
     reader.readAsDataURL(file);
   };
 
+  const handleDownloadGradedImage = () => {
+    const canvas = gradedImageCanvasRef.current;
+    if (!canvas) return;
+    const link = document.createElement('a');
+    link.download = `chromafilm_${presetId || 'graded'}_overlay.jpg`;
+    link.href = canvas.toDataURL('image/jpeg', 0.95);
+    link.click();
+  };
+
   const isAtCalibrated = Math.abs(intensity - calibratedIntensity) < 0.01;
 
   return (
@@ -519,6 +587,151 @@ export const FilmCanvas: React.FC<FilmCanvasProps> = ({
             <span>Bảng Tra P0</span>
           </button>
         </div>
+      </div>
+
+      {/* Level 1.5: Pre-Exposed Graphic Overlay Layer (RETOCOLOR Series) */}
+      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-1.5 bg-slate-900/95 border-b border-slate-800 text-xs shrink-0">
+        <div className="flex items-center gap-2 overflow-x-auto py-0.5">
+          <div className="flex items-center gap-1.5 text-pink-400 font-mono text-[11px] font-semibold shrink-0">
+            <Sparkles className="w-3.5 h-3.5 text-pink-400" />
+            <span>Họa Tiết Pre-Exposed:</span>
+          </div>
+
+          {/* Pattern Selector Pills */}
+          <div className="flex items-center gap-1 p-0.5 bg-slate-950 border border-slate-800 rounded-lg">
+            <button
+              onClick={() => setOverlayType('none')}
+              className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${
+                overlayType === 'none'
+                  ? 'bg-slate-800 text-slate-200 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-300'
+              }`}
+            >
+              Tắt
+            </button>
+            <button
+              onClick={() => {
+                setOverlayType('bling-bling');
+                if (overlayOpacity < 0.2) setOverlayOpacity(0.85);
+              }}
+              className={`flex items-center gap-1 px-2.5 py-0.5 rounded text-[11px] font-medium transition-colors ${
+                overlayType === 'bling-bling'
+                  ? 'bg-amber-400 text-slate-950 font-semibold shadow-sm'
+                  : 'text-amber-300/80 hover:text-amber-200 hover:bg-slate-900'
+              }`}
+            >
+              <span>✦ Bling-Bling 400</span>
+            </button>
+            <button
+              onClick={() => {
+                setOverlayType('catcha');
+                if (overlayOpacity < 0.2) setOverlayOpacity(0.85);
+              }}
+              className={`flex items-center gap-1 px-2.5 py-0.5 rounded text-[11px] font-medium transition-colors ${
+                overlayType === 'catcha'
+                  ? 'bg-cyan-400 text-slate-950 font-semibold shadow-sm'
+                  : 'text-cyan-300/80 hover:text-cyan-200 hover:bg-slate-900'
+              }`}
+            >
+              <span>🐾 Cat'cha 400</span>
+            </button>
+            <button
+              onClick={() => {
+                setOverlayType('emoticon');
+                if (overlayOpacity < 0.2) setOverlayOpacity(0.85);
+              }}
+              className={`flex items-center gap-1 px-2.5 py-0.5 rounded text-[11px] font-medium transition-colors ${
+                overlayType === 'emoticon'
+                  ? 'bg-pink-400 text-slate-950 font-semibold shadow-sm'
+                  : 'text-pink-300/80 hover:text-pink-200 hover:bg-slate-900'
+              }`}
+            >
+              <span>(◕‿◕) Emoticon 400</span>
+            </button>
+          </div>
+        </div>
+
+        {/* When overlay is active, display Blend Mode, Opacity, Seed Randomizer, and Save Image */}
+        {overlayType !== 'none' && (
+          <div className="flex items-center gap-3 shrink-0 text-xs">
+            {/* Blend Mode Picker */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-slate-400 font-mono text-[11px]">Blend:</span>
+              <div className="flex items-center gap-1 p-0.5 bg-slate-950 border border-slate-800 rounded-md">
+                <button
+                  onClick={() => setOverlayBlendMode('screen')}
+                  title="Screen: Hòa trộn dịu êm tự nhiên, chuẩn phim quang học"
+                  className={`px-2 py-0.5 rounded text-[10px] font-mono transition-colors ${
+                    overlayBlendMode === 'screen'
+                      ? 'bg-pink-500/20 text-pink-300 border border-pink-500/40 font-semibold'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  Screen
+                </button>
+                <button
+                  onClick={() => setOverlayBlendMode('lighter')}
+                  title="Additive (Linear Dodge): Cộng sáng quang học phát quang"
+                  className={`px-2 py-0.5 rounded text-[10px] font-mono transition-colors ${
+                    overlayBlendMode === 'lighter'
+                      ? 'bg-pink-500/20 text-pink-300 border border-pink-500/40 font-semibold'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  Additive
+                </button>
+                <button
+                  onClick={() => setOverlayBlendMode('color-dodge')}
+                  title="Color-Dodge: Đẩy rực rỡ và phát quang họa tiết"
+                  className={`px-2 py-0.5 rounded text-[10px] font-mono transition-colors ${
+                    overlayBlendMode === 'color-dodge'
+                      ? 'bg-pink-500/20 text-pink-300 border border-pink-500/40 font-semibold'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  Dodge
+                </button>
+              </div>
+            </div>
+
+            {/* Opacity Range */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-slate-400 font-mono text-[11px]">Rõ:</span>
+              <input
+                type="range"
+                min="0.2"
+                max="1.0"
+                step="0.05"
+                value={overlayOpacity}
+                onChange={(e) => setOverlayOpacity(parseFloat(e.target.value))}
+                className="w-16 accent-pink-400 bg-slate-800 h-1.5 rounded cursor-pointer"
+              />
+              <span className="font-mono text-pink-300 font-semibold text-[11px] w-7 text-right">
+                {Math.round(overlayOpacity * 100)}%
+              </span>
+            </div>
+
+            {/* Randomize Seed button */}
+            <button
+              onClick={() => setOverlaySeed((s) => (s * 16807 + 7) % 100000)}
+              title="Đổi vị trí ngẫu nhiên các họa tiết trên ảnh"
+              className="flex items-center gap-1 px-2 py-0.5 bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white rounded text-[11px] font-mono transition-colors"
+            >
+              <Dices className="w-3 h-3 text-pink-400" />
+              <span>Đổi Bố Cục</span>
+            </button>
+
+            {/* Download Graded + Overlay image */}
+            <button
+              onClick={handleDownloadGradedImage}
+              title="Lưu file ảnh đã áp màu và hòa trộn họa tiết"
+              className="flex items-center gap-1 px-2.5 py-0.5 bg-pink-500/20 hover:bg-pink-500/30 border border-pink-500/40 text-pink-200 rounded text-[11px] font-medium transition-colors"
+            >
+              <Download className="w-3 h-3" />
+              <span>Lưu Ảnh</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Level 2: Plate Selector & View Mode Switcher */}
@@ -594,27 +807,43 @@ export const FilmCanvas: React.FC<FilmCanvasProps> = ({
             <Sparkles className="w-3 h-3 text-pink-400" />
             <span>Exposure Zones</span>
           </button>
+          <button
+            onClick={() => setCanvasScaleMode((m) => (m === 'fit' ? 'full' : 'fit'))}
+            title={canvasScaleMode === 'fit' ? 'Chuyển sang 100% cuộn xem toàn ảnh' : 'Chuyển sang vừa vặn khung hình'}
+            className={`flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium transition-colors whitespace-nowrap ${
+              canvasScaleMode === 'full' ? 'bg-amber-400 text-slate-950 font-semibold' : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            {canvasScaleMode === 'fit' ? <Maximize2 className="w-3 h-3" /> : <Minimize2 className="w-3 h-3" />}
+            <span>{canvasScaleMode === 'fit' ? 'Fit Khung' : '100% Cuộn'}</span>
+          </button>
         </div>
       </div>
 
-      {/* Main Interactive Canvas Stage */}
+      {/* Main Interactive Canvas Stage - Scrollable for Full Image Inspection */}
       <div
         ref={containerRef}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
-        className={`relative flex-1 flex items-center justify-center p-4 bg-slate-950 overflow-hidden select-none ${
-          viewMode === 'split' ? 'cursor-ew-resize' : 'cursor-crosshair'
-        }`}
+        className={`relative flex-1 p-4 bg-slate-950 overflow-auto select-none ${
+          canvasScaleMode === 'fit' ? 'flex items-center justify-center' : 'block'
+        } ${viewMode === 'split' ? 'cursor-ew-resize' : 'cursor-crosshair'}`}
       >
-        <canvas
-          ref={displayCanvasRef}
-          className="max-w-full max-h-[520px] rounded shadow-2xl object-contain border border-slate-800/80 bg-black"
-        />
+        <div className={canvasScaleMode === 'full' ? 'min-w-fit flex justify-center py-2' : 'flex items-center justify-center w-full h-full'}>
+          <canvas
+            ref={displayCanvasRef}
+            className={`${
+              canvasScaleMode === 'fit'
+                ? 'max-w-full max-h-[580px] object-contain'
+                : 'w-auto h-auto max-w-none max-h-none'
+            } rounded shadow-2xl border border-slate-800/80 bg-black transition-all`}
+          />
+        </div>
 
         {isProcessing && (
-          <div className="absolute top-6 right-6 px-2.5 py-1 bg-slate-900/90 border border-slate-700/80 rounded text-[11px] font-mono text-amber-400 tracking-wider flex items-center gap-1.5 shadow-lg">
+          <div className="absolute top-6 right-6 px-2.5 py-1 bg-slate-900/90 border border-slate-700/80 rounded text-[11px] font-mono text-amber-400 tracking-wider flex items-center gap-1.5 shadow-lg z-20">
             <span>UPDATING TRANSFORMS</span>
           </div>
         )}

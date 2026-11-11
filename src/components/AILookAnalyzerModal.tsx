@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { FilmEmulationProfile } from '../color-science/types.ts';
 import { X, Sparkles, Upload, ArrowRight, CheckCircle2, Sliders, AlertCircle } from 'lucide-react';
+import { safeFetchJson, downscaleImageForAnalysis, computeLocalColorScienceAnalysis } from '../utils/safeApi.ts';
 
 interface AILookAnalyzerModalProps {
   isOpen: boolean;
@@ -53,24 +54,42 @@ export const AILookAnalyzerModal: React.FC<AILookAnalyzerModalProps> = ({
     setAnalysisResult(null);
 
     try {
-      const response = await fetch('/api/analyze-look', {
+      let base64ToSend = imagePreview;
+      if (imagePreview) {
+        const { base64 } = await downscaleImageForAnalysis(imagePreview, 1024, 0.85);
+        base64ToSend = base64;
+      }
+
+      const data = await safeFetchJson<any>('/api/analyze-look', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          imageBase64: imagePreview,
+          imageBase64: base64ToSend,
           mimeType: imageMime,
           description: description.trim(),
         }),
       });
 
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to analyze look.');
-      }
-
       setAnalysisResult(data);
     } catch (err: any) {
-      console.error(err);
+      console.warn('API look analysis error:', err);
+      // Fallback: if user uploaded an image, try client-side local analysis
+      if (imagePreview) {
+        try {
+          const img = new Image();
+          img.src = imagePreview;
+          await new Promise((res, rej) => {
+            img.onload = res;
+            img.onerror = rej;
+          });
+          const localData = computeLocalColorScienceAnalysis(img, description || 'Local Extracted Look');
+          setAnalysisResult(localData);
+          setErrorMessage('Lưu ý: API Cloud bận, hệ thống đã tự động kích hoạt bộ phân tích pixel cục bộ chính xác.');
+          return;
+        } catch {
+          // ignore
+        }
+      }
       setErrorMessage(err.message || 'An error occurred during look analysis.');
     } finally {
       setIsAnalyzing(false);
